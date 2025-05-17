@@ -1,4 +1,4 @@
-package binary_trees
+package bst
 
 type CompareFunc[T any] func (a, b T) int
 
