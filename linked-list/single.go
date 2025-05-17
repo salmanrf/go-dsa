@@ -1,4 +1,4 @@
-package single
+package linkedlist
 
 type node[T any] struct {
 	val T 
@@ -34,13 +34,14 @@ func (l *linked_list[T]) Get(index int) (exists bool, nd *node[T]) {
 	i := 0
 	node := l.head
 
-	for node != nil {
-		if i == index {
-			return true, node
-		}
-
+	for i < index && node.next != nil {
 		node = node.next
+
 		i++
+	}
+
+	if i == index {
+		return true, node
 	}
 
 	return false, nd
