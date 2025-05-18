@@ -1,32 +1,33 @@
 package linkedlist
 
-type node[T any] struct {
-	val T 
-	next *node[T]
+type ListNode[T any] struct {
+	Val T 
+	next *ListNode[T]
 }
 
 type linked_list[T any] struct {
-	head *node[T]
+	head *ListNode[T]
 }
 
 type SingleLinkedList[T any] interface {
-	Head() *node[T]
-	Get(index int) (bool, *node[T])
+	Head() *ListNode[T]
+	Get(index int) (bool, *ListNode[T])
 	Insert(index int, val T) bool
 	Append(T)
+	Traverse(trFunc func (nd *ListNode[T]))
 }
 
 func New[T any](val T) (SingleLinkedList[T]) {
-	head := &node[T] {val, nil}
+	head := &ListNode[T] {Val: val, next: nil}
 	
 	return &linked_list[T]{head}
 }
 
-func (l *linked_list[T]) Head() (*node[T]) {
+func (l *linked_list[T]) Head() (*ListNode[T]) {
 	return l.head
 }
 
-func (l *linked_list[T]) Get(index int) (exists bool, nd *node[T]) {
+func (l *linked_list[T]) Get(index int) (exists bool, nd *ListNode[T]) {
 	if index < 0 {
 		return false, nd
 	}
@@ -55,7 +56,7 @@ func (l *linked_list[T]) Append(val T) {
 		curr = curr.next
 	}
 
-	new := &node[T]{val, nil}
+	new := &ListNode[T]{Val: val, next: nil}
 
 	curr.next = new
 }
@@ -65,7 +66,7 @@ func (l *linked_list[T]) Insert(index int, val T) bool {
 		return false
 	}
 
-	new := node[T]{val: val, next: l.head}
+	new := ListNode[T]{Val: val, next: l.head}
 
 	if index == 0 {
 		l.head = &new
@@ -81,4 +82,14 @@ func (l *linked_list[T]) Insert(index int, val T) bool {
 	nd.next = &new
 
 	return true
+}
+
+func (l *linked_list[T]) Traverse(trFunc func (nd *ListNode[T])) {
+	n := l.head
+
+	for n != nil {
+		trFunc(n)
+
+		n = n.next
+	}
 }
