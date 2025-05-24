@@ -26,8 +26,8 @@ func TestNew(t *testing.T) {
 			t.Errorf("got %v, want %v", gotExists, wantExists)
 		}
 
-		if gotNode.val != wantValue {
-			t.Errorf("got %v, want %v", gotNode.val, wantValue)
+		if gotNode.Val != wantValue {
+			t.Errorf("got %v, want %v", gotNode.Val, wantValue)
 		}
 	})
 }
@@ -63,8 +63,8 @@ func TestGet(t *testing.T) {
 				t.Errorf("got %v, want %v", gotExists, wantExists)
 			}
 
-			if gotNode.val != wantVal {
-				t.Errorf("got %v, want %v", gotNode.val, wantVal)
+			if gotNode.Val != wantVal {
+				t.Errorf("got %v, want %v", gotNode.Val, wantVal)
 			}
 		})
 	}
