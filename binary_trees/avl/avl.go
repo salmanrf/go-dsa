@@ -1,8 +1,6 @@
-package binary_trees
+package avl
 
 import (
-	"fmt"
-
 	linkedlist "github.com/salmanrf/go-dsa/linked-list"
 )
 
@@ -28,15 +26,39 @@ func NewAVL[T any](data T, cf CompareFunc[T]) *AVLNode[T] {
 	return node
 }
 
-func (r *AVLNode[T]) CollectInorder(collection linkedlist.SingleLinkedList[T]) linkedlist.SingleLinkedList[T] {
+func (r *AVLNode[T]) Search(val T) *AVLNode[T] {
+	if r.compareFunc(val, r.Data) == 0 {
+		return r
+	} 
+
+	if r.compareFunc(val, r.Data) < 0 {
+		if r.Left == nil {
+			return nil
+		}
+		
+		return r.Left.Search(val)
+	}
+
+	if r.compareFunc(val, r.Data) > 0 {
+		if r.Right == nil {
+			return nil
+		}
+		
+		return r.Right.Search(val)
+	}
+
+	return nil
+}
+
+func (r *AVLNode[T]) CollectInorder(collection linkedlist.SingleLinkedList[*AVLNode[T]]) linkedlist.SingleLinkedList[*AVLNode[T]] {
 	if r.Left != nil {
 		collection = r.Left.CollectInorder(collection)
 	}
 
 	if collection == nil {
-		collection = linkedlist.New(r.Data)
+		collection = linkedlist.New(r)
 	} else {
-		collection.Append(r.Data)
+		collection.Append(r)
 	}
 
 	if r.Right != nil {
@@ -65,6 +87,57 @@ func (r *AVLNode[T]) CalculateHeight() int {
 	return 1 + max(lh, rh)
 }
 
+func rebalanceTree[T any](root *AVLNode[T]) *AVLNode[T] {
+	if root == nil {
+		return nil
+	}
+	
+	root.Height = root.CalculateHeight()
+	balanceFactor := root.GetBalanceFactor()
+
+	// * Left Imbalance
+	if balanceFactor > 1 {
+		lbf := 0
+		
+		if root.Left != nil {
+			lbf = root.Left.GetBalanceFactor()
+		} 
+			
+		// * Left left imbalance (Heavier on left subtree)
+		// * The BF will be positive
+		if lbf > 0 {
+			return llRotate(root)
+		}
+
+		// * Left right imbalance (Heavier on left subtree's right)
+		// * The BF will be negative
+		if lbf < 0 {
+			return lrRotate(root)
+		}
+	}
+
+	// * Right Imbalance
+	if balanceFactor < -1 {
+		rbf := 0
+
+		if root.Right != nil {
+			rbf = root.Right.GetBalanceFactor()
+		}
+
+		// * Right right imbalance
+		if rbf < 0 {
+			return rrRotate(root)
+		}
+
+		// * Right left imbalance
+		if rbf > 0 {
+			return rlRotate(root)
+		}
+	}
+
+	return root
+}
+
 func (r *AVLNode[T]) Insert(val T) *AVLNode[T] {
 	if r.compareFunc(r.Data, val) < 0 {
 		if r.Left == nil {
@@ -81,52 +154,56 @@ func (r *AVLNode[T]) Insert(val T) *AVLNode[T] {
 			r.Right = r.Right.Insert(val)
 		}
 	}
+	
+	return rebalanceTree(r)
+}
 
-	// * Maintain tree balance
-	r.Height = r.CalculateHeight()
-	balanceFactor := r.GetBalanceFactor()
-
-	// * Left Imbalance
-	if balanceFactor > 1 {
-		lbf := 0
-		
+func (r *AVLNode[T]) Delete(val T) *AVLNode[T] {
+	compareResult := r.compareFunc(r.Data, val)
+	
+	if compareResult < 0 {
 		if r.Left != nil {
-			lbf = r.Left.GetBalanceFactor()
-		} 
-			
-		// * Left left imbalance (Heavier on left subtree)
-		// * The BF will be positive
-		if lbf > 0 {
-			return llRotate(r)
-		}
+			r.Left = r.Left.Delete(val)
 
-		// * Left right imbalance (Heavier on left subtree's right)
-		// * The BF will be negative
-		if lbf < 0 {
-			return lrRotate(r)
+			return rebalanceTree(r)
 		}
 	}
 
-	// * Right Imbalance
-	if balanceFactor < -1 {
-		rbf := 0
-
+	if compareResult > 0 {
 		if r.Right != nil {
-			rbf = r.Right.GetBalanceFactor()
-		}
-
-		// * Right right imbalance
-		if rbf < 0 {
-			return rrRotate(r)
-		}
-
-		// * Right left imbalance
-		if rbf > 0 {
-			return rlRotate(r)
+			r.Right = r.Right.Delete(val)
+			
+			return rebalanceTree(r)
 		}
 	}
 
-	return r
+	if r.Left == nil {
+		return r.Right
+	}
+
+	if r.Right == nil {
+		return r.Left
+	}
+	
+	predecessor := r.InorderPredecessor()
+
+	if predecessor != nil {
+		r.Data = predecessor.Data
+		r.Left = r.Left.Delete(predecessor.Data)
+
+		return rebalanceTree(r)
+	}
+
+	successor := r.InorderSuccessor()
+
+	if successor != nil {
+		r.Data = successor.Data
+		r.Right = r.Right.Delete(successor.Data)
+
+		return rebalanceTree(r)
+	}
+
+	return nil
 }
 
 func (r *AVLNode[T]) GetBalanceFactor() int {
@@ -192,8 +269,6 @@ func rrRotate[T any](p *AVLNode[T]) *AVLNode[T] {
 }
 
 func rlRotate[T any](p *AVLNode[T]) *AVLNode[T] {
-	fmt.Println(p.Data)
-	
 	pr := p.Right
 	prl := p.Right.Left
 
@@ -208,6 +283,46 @@ func rlRotate[T any](p *AVLNode[T]) *AVLNode[T] {
 	prl.Height = prl.CalculateHeight()
 	
 	return prl
+}
+
+func (r *AVLNode[T]) InorderSuccessor() *AVLNode[T] {
+	if r.Right == nil {
+		return nil
+	}
+
+	return r.Right.Min()
+}
+
+func (r *AVLNode[T]) InorderPredecessor() *AVLNode[T] {
+	if r.Left == nil {
+		return nil
+	}
+
+	return r.Left.Max()
+}
+
+func (r *AVLNode[T]) Min() *AVLNode[T] {
+	if r == nil {
+		return nil
+	}
+	
+	if r.Left == nil {
+		return r
+	}
+
+	return r.Left.Min()
+}
+
+func (r *AVLNode[T]) Max() *AVLNode[T] {
+	if r == nil {
+		return nil
+	}
+	
+	if r.Right == nil {
+		return r
+	}
+
+	return r.Right.Max()
 }
 
 func (r *AVLNode[T]) GetHeight() int {

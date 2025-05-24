@@ -1,4 +1,4 @@
-package binary_trees
+package avl
 
 import (
 	"fmt"
@@ -50,21 +50,19 @@ func TestAVLInsert(t *testing.T) {
 
 	i := 0
 	
-	list.Traverse(func (n *linkedlist.ListNode[int]) {
+	list.Traverse(func (n *linkedlist.ListNode[*AVLNode[int]]) {
 		elements := []int{8, 10, 12, 13, 14}
 		t.Run("Element should exist and in order", func(t *testing.T) {
 			want := elements[i]
 
-			fmt.Println(n.Val)
-				
-			got := n
+			got := n.Val
 				
 			if got == nil  {
 				t.Errorf("got %v, want %v", got, want)
 			}
 		
-			if got.Val != want  {
-				t.Errorf("got %v, want %v", got.Val, want)
+			if got.Data != want  {
+				t.Errorf("got %v, want %v", got.Data, want)
 			}
 
 			i++
@@ -146,10 +144,10 @@ func TestInsertLeftLeftImbalance(t *testing.T) {
 
 		i := 0
 
-		list.Traverse(func (n *linkedlist.ListNode[int]) {
+		list.Traverse(func (n *linkedlist.ListNode[*AVLNode[int]]) {
 			want := elements[i]
 
-			got := n.Val
+			got := n.Val.Data
 
 			if got != want {
 				t.Errorf("got %d, want %d", got, want)
@@ -218,5 +216,131 @@ func TestInsertRightLeftImbalance(t *testing.T) {
 		if got != want {
 			t.Errorf("got %d, want %d", got, want)
 		}
+	})
+}
+
+func TestDelete(t *testing.T) {
+	root := NewAVL(50, compareFuncInt)
+
+	root = root.Insert(40)
+	root = root.Insert(60)
+	root = root.Insert(70)
+	root = root.Insert(65)
+
+	root = root.Delete(60)
+
+	t.Run("Deleted node is gone", func (t *testing.T) {
+		var want *AVLNode[int] = nil
+		got := root.Search(60)
+
+		if got != want {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("Root hasn't changed", func (t *testing.T) {
+		want := 50
+		got := root.Data
+
+		if got != want {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+	
+	root = root.Delete(50)
+
+	t.Run("Deleted root is replaced by predecessor first", func (t *testing.T) {
+		want := 65
+		got := root.Data
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("Tree is rebalanced after deletion (LL)", func (t *testing.T) {
+		root := NewAVL(50, compareFuncInt)
+
+		root = root.Insert(25)
+		root = root.Insert(100)
+		root = root.Insert(200)
+
+		root = root.Delete(25)
+
+		want := 100
+		got := root.Data
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+		list := root.CollectInorder(nil)
+
+		elements := []int{50, 100, 200}
+		i := 0
+		
+		list.Traverse(func (lnode *linkedlist.ListNode[*AVLNode[int]]) {
+			t.Run(fmt.Sprintf("Elements are in order %d\n", i), func (t *testing.T) {
+				want := elements[i]
+	
+				got := lnode.Val
+
+				if got.Data != want {
+					t.Errorf("got %d, want %d", got.Data, want)
+				}
+
+				gotBf := got.GetBalanceFactor() 
+
+				if gotBf < -1 || gotBf > 1 {
+					t.Errorf("got balance factor %d, want [-1, 1]", gotBf)
+				}
+	
+				i++
+			})
+		})
+	})
+
+	t.Run("Tree is rebalanced after deletion (LR)", func (t *testing.T) {
+		root := NewAVL(50, compareFuncInt)
+
+		root = root.Insert(25)
+		root = root.Insert(100)
+		root = root.Insert(200)
+		root = root.Insert(40)
+
+		root = root.Delete(100)
+		root = root.Delete(200)
+
+		want := 40
+		got := root.Data
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+
+		list := root.CollectInorder(nil)
+
+		elements := []int{25, 40, 50}
+		i := 0
+		
+		list.Traverse(func (lnode *linkedlist.ListNode[*AVLNode[int]]) {
+			t.Run(fmt.Sprintf("Elements are in order %d\n", i), func (t *testing.T) {
+				want := elements[i]
+	
+				got := lnode.Val
+
+				if got.Data != want {
+					t.Errorf("got %d, want %d", got.Data, want)
+				}
+
+				gotBf := got.GetBalanceFactor() 
+
+				if gotBf < -1 || gotBf > 1 {
+					t.Errorf("got balance factor %d, want [-1, 1]", gotBf)
+				}
+	
+				i++
+			})
+		})
 	})
 }
