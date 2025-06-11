@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+func compareFuncInt(a, b int) int {
+	return b - a
+}
+
 func TestNew(t *testing.T) {
 	t.Run("Should return the head of the list", func (t *testing.T) {
 		want := 10
@@ -68,4 +72,70 @@ func TestGet(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFind(t *testing.T) {
+	list := New(0)
+
+	t.Run("Should return found node", func (t *testing.T) {
+		got := list.Find(0, func (a, b int) bool { return a == b })
+		want := 0
+
+		if got == nil {
+			t.Errorf("got %v, want non nil", got)
+		}
+		
+		if got.Val != want {
+			t.Errorf("got %v, want %v", got.Val, want)
+		}
+	})
+
+	list.Append(100)
+	list.Append(200)
+	list.Append(-100)
+
+	t.Run("Should return found node", func (t *testing.T) {
+		got := list.Find(200, func (a, b int) bool { return a == b })
+		want := 200
+
+		if got.Val != want {
+			t.Errorf("got %v, want %v", got.Val, want)
+		}
+	})
+
+	t.Run("Should return nil when not found", func (t *testing.T) {
+		got := list.Find(99, func (a, b int) bool { return a == b })
+		var want *ListNode[int] = nil
+
+		if got != want {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+}
+
+func TestAppendSorted(t *testing.T) {
+	list := New(0)
+
+	list.AppendSorted(-100, compareFuncInt)
+	list.AppendSorted(100, compareFuncInt)
+	list.AppendSorted(20, compareFuncInt)
+	list.AppendSorted(10, compareFuncInt)
+	list.AppendSorted(200, compareFuncInt)
+
+	t.Run("Should append elements in ASC order", func (t *testing.T) {
+		sorted := []int{-100, 0, 10, 20, 100, 200}
+
+		i := 0
+		
+		list.Traverse(func (nd *ListNode[int]) {
+			got := nd.Val
+			want := sorted[i]
+
+			if got != want {
+				t.Errorf("got %d, want %d", got, want)
+			}
+
+			i++
+		})
+	})
 }

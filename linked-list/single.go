@@ -12,8 +12,10 @@ type linked_list[T any] struct {
 type SingleLinkedList[T any] interface {
 	Head() *ListNode[T]
 	Get(index int) (bool, *ListNode[T])
+	Find(T, func (a, b T) bool) *ListNode[T]
 	Insert(index int, val T) bool
 	Append(T)
+	AppendSorted(T, func (a, b T) int)
 	Traverse(trFunc func (nd *ListNode[T]))
 }
 
@@ -48,6 +50,22 @@ func (l *linked_list[T]) Get(index int) (exists bool, nd *ListNode[T]) {
 	return false, nd
 }
 
+func (l *linked_list[T]) Find(val T, cf func (a, b T) bool) *ListNode[T] {
+	return find(l.head, val, cf)
+}
+
+func find[T any](node *ListNode[T], val T, cf func (a, b T) bool) *ListNode[T] {
+	if node == nil {
+		return nil
+	}
+	
+	if cf(val, node.Val) {
+		return node
+	}
+
+	return find(node.next, val, cf)
+}
+
 func (l *linked_list[T]) Append(val T) {
 	curr := l.head
 	i := 0
@@ -60,6 +78,47 @@ func (l *linked_list[T]) Append(val T) {
 
 	curr.next = new
 }
+
+func (l *linked_list[T]) AppendSorted(val T, compareFunc func (a, b T) int) {
+	node := l.head
+
+	new := &ListNode[T]{
+		Val: val,
+		next: nil,
+	}
+	
+	if node == nil {
+		l.head = new
+
+		return
+	}
+
+	comp := compareFunc(node.Val, val)
+
+	if comp < 0 {
+		new.next = l.head
+		l.head = new
+
+		return
+	}
+
+	var prev *ListNode[T] = nil
+
+	for node.next != nil {
+		prev = node
+		node = node.next
+		comp = compareFunc(node.Val, val)
+
+		if comp <= 0 {
+			prev.next = new
+			new.next = node
+			
+			return
+		}
+	}
+
+	node.next = new
+} 
 
 func (l *linked_list[T]) Insert(index int, val T) bool {
 	if index < 0 {
