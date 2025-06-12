@@ -1,24 +1,10 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/salmanrf/go-dsa/binary_trees/avl"
-)
-
-func compareFunc(a, b int) int {
-	return b - a
-}
+import "github.com/salmanrf/go-dsa/hashing"
 
 func main() {
-	root := avl.NewAVL(10, compareFunc)
-
-	root = root.Insert(40)
-	root = root.Insert(60)
-	root = root.Insert(70)
-	root = root.Insert(65)
-
-	root = root.Delete(60)
-
-	fmt.Println("ROOT", root.Data)
+	hash_table := hashing.New(10)
+	
+	hash_table.Insert(777);
+	hash_table.Insert(1092);
 }
